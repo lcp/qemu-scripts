@@ -256,7 +256,7 @@ in RHEL guest.
 
 For more details about VirtFS, please check [QEMU 9psetup](https://wiki.qemu.org/Documentation/9psetup).
 
-### Networking File Systems
+## Networking File Systems
 
 If the guest is configured with a network device, then it may be a good idea to share files
 with networking file systems. SSHFS could be a convenient solution since it only requires the

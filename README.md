@@ -2,7 +2,7 @@
 
 To launch a VM with QEMU, there are some basic parameters:
 
-* `-kvm`: enable the KVM acceleration
+* `-enable-kvm`: enable the KVM acceleration
 * `-smp <number>`: specify the CPU number
 * `-m <number>`: the memory size in MB
 * `-M <machine>`: the machine type. For the modern x86_64 VM, "q35" is a reasonable choice.
@@ -10,7 +10,7 @@ To launch a VM with QEMU, there are some basic parameters:
 Then we can launch a VM with 4 CPUs and 8GB RAM like this:
 
     $ qemu-system-x86_64 \
-      -kvm \
+      -enable-kvm \
       -smp 4 \
       -m 8192 \
       -M q35 \

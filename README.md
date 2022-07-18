@@ -264,3 +264,129 @@ host to enable ssh daemon. For the VM configured with SLIRP, the built-in SMB se
 (as mentioned in the SLIRP section) could be a cheap solution. If the above methods don't
 apply to your case, NFS may be another solution. It only requires to configure NFS server
 in the host. Please check the distribution document for the NFS server setup.
+
+# Display
+
+## Local Display
+
+When launching a QEMU VM locally, by default a display window will pop up to show the VGA
+output. There are several options for VGA card emulation: cirrus, std, vmware, qxl, virtio,
+etc. 'std' is usually good enough for the general usage since it is based on the VESA 2.0
+VBE extensions and modern OSes support that.
+
+To specify the 'std' VGA card:
+
+    $ qemu-system-x86_64 \
+      ...
+      -vga std \
+      ...
+
+For the Linux guest, 'virtio' could be a good choice since virtio-vga/virtio-gpu provides
+3D acceleration based on 'virgl'. To use 'vritio' VGA:
+
+    $ qemu-system-x86_64 \
+      ...
+      -vga virtio \
+      ...
+
+For the newer QEMU (>= 6.0.0), it could enable the 3D acceleration by using `virtio-vga-gl`:
+
+    $ qemu-system-x86_64 \
+      ...
+      -device virtio-vga-gl \
+      -display gtk,gl=on \
+      ...
+
+Please note that you only need to choose `-vga virtio` or `-device virtio-vga-gl` since
+both parameters create a new VGA device.
+
+## Remote Display
+
+When launching a VM remotely, you may still need the VGA output. Of course you can use
+SSH X11 forwarding (`ssh -X` or `ssh -Y`) to redirect the display window, but it's usually
+very slow unless you have 1Gb or 10Gb connection to the server. There are two major ways
+to redirect the VGA output: VNC and SPICE. Both of them open a port in the server for the
+client to connect. You can tweak the firewall rules and configure VNC or SPICE with extra
+security settings. However, the easiest way is to use SSH port forwarding to provide a
+simple and secure connection.
+
+Assume you assign the VNC or SPICE port to 5901, you can forward the remote 5901 port to
+your local 5901 port like this:
+
+    $ ssh -L 5901:localhost:5901 user@remote.ip
+
+As long as the SSH connection exists, connecting to the local 5901 port is equivalent to
+connecting to the remote 5901 port. Then, you can use the VNC or SPICE viewer to connect
+to the local 5901 port to see the VGA output. Some advanced viewer such as `remmina` has
+the built-in SSH support, and it is easy to setup the remote display connection with such
+program.
+
+### VNC
+
+Enabling VNC support is very easy. Just add the '-vnc' parameter:
+
+    $ qemu-system-x86_64 \
+      ...
+      -vnc :1 \
+      ...
+
+The base of VNC port name is 5900, so `-vnc :1` opens `5900 + 1 = 5901` port.
+
+### SPICE
+
+SPICE is a protocol designed for remote access and provides more features than VNC such
+as hardware acceleration, copy-n-paste, dynamic resolution, 2-way audio, and more. It
+is based on the 'qxl' VGA device. To create a SPICE port on 5901:
+
+    $ qemu-system-x86_64 \
+      ...
+      -vga qxl -spice port=5901,addr=127.0.0.1,disable-ticketing=on \
+      ...
+
+It's also possible to enable 3D acceleration with `gl=on`:
+
+    $ qemu-system-x86_64 \
+      ...
+      -vga qxl -spice port=5901,addr=127.0.0.1,disable-ticketing=on,gl=on \
+      ...
+
+To enable the advanced features, the additional SPICE agent is necessary:
+
+    $ qemu-system-x86_64 \
+      ...
+      -vga qxl -spice port=5901,addr=127.0.0.1,disable-ticketing=on,gl=on \
+      -device virtio-serial \
+      -chardev spicevmc,id=vdagent,debug=0,name=vdagent \
+      -device virtserialport,chardev=vdagent,name=com.redhat.spice.0 \
+      ...
+
+For more details, see [Spice for Newbies](https://www.spice-space.org/spice-for-newbies.html).
+
+# Confidential Guest
+
+The modern CPUs may support the security extensions such as AMD SEV or Intel TDX to
+encrypt the guest memory by a special hardware to prevent the host from tampering
+the guest memory. Currently, AMD EPYC CPUs with SEV are widely available, and SEV
+support can be enabled with the following parameters:
+
+    # qemu-system-x86_64 \
+      -M type=q35,confidential-guest-support=sev0 \
+      -object sev-guest,id=sev0,cbitpos=47,reduced-phys-bits=1,policy=0x1 \
+      ...
+
+'cbitpos' and 'reduced-phys-bits' are hardware-dependent and usually 47 and 1.
+To set the 'policy', please check the following table:
+
+| Bit(s) | Definition                                                                              |
+|--------|-----------------------------------------------------------------------------------------|
+| 0      | If set, debugging of the guest is disallowed                                            |
+| 1      | If set, sharing keys with other guests is disallowed                                    |
+| 2      | If set, SEV-ES is required                                                              |
+| 3      | If set, sending the guest to another platform is disallowed                             |
+| 4      | If set, the guest must not be transmitted to another platform that is not in the domain |
+| 5      | If set, the guest must not be transmitted to another platform that is no SEV-capable    |
+| 6-15   | Reserved                                                                                |
+| 16-32  | The guest must not be transmitted to another platform with a lower firmware version     |
+
+For more details, see [QEMU Confidential Guest Support](https://qemu.readthedocs.io/en/latest/system/confidential-guest-support.html)
+and [AMD Secure Encrypted Virtual- ization (AMD-SEV) Guide](https://documentation.suse.com/sles/15-SP4/pdf/article-amd-sev_color_en.pdf).

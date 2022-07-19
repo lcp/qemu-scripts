@@ -124,6 +124,8 @@ interacts with the host.
 
 There are two common used network backends: User Networking and TAP.
 
+For more details of QEMU networking, please see [QEMU Networking](https://wiki.qemu.org/Documentation/Networking).
+
 ## User Networking (SLIRP)
 
 If you launch the VM with a normal user, SLIRP is the easiest backend to use. SLIRP implements
@@ -209,7 +211,8 @@ To attach a TAP device to a bridge, just use this 'ip' command:
 
 Then, tap0 will be under the control of br0.
 
-For more details of QEMU networking, please see [QEMU Networking](https://wiki.qemu.org/Documentation/Networking).
+The document, [UEFI HTTPBoot Server Setup - Network Environment](https://en.opensuse.org/UEFI_HTTPBoot_Server_Setup#Isolated_Network_Within_The_Host),
+provides some examples for setting up tap network.
 
 # File Sharing
 

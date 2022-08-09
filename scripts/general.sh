@@ -31,14 +31,14 @@ CPU="-smp 4"
 
 # SPICE
 SPICE_PORT=5901
-DISPLAY="-vga qxl \
-	-spice port=${SPICE_PORT},addr=127.0.0.1,disable-ticketing=on"
+GFX="-vga qxl \
+     -spice port=${SPICE_PORT},addr=127.0.0.1,disable-ticketing=on"
 #  Set up vdagent for copy&paste between host and guest, dynamic resolution
 #  changes, etc.
-DISPLAY="${DISPLAY} \
-	-device virtio-serial \
-	-chardev spicevmc,id=vdagent,debug=0,name=vdagent \
-	-device virtserialport,chardev=vdagent,name=com.redhat.spice.0"
+GFX="${GFX} \
+     -device virtio-serial \
+     -chardev spicevmc,id=vdagent,debug=0,name=vdagent \
+     -device virtserialport,chardev=vdagent,name=com.redhat.spice.0"
 
 HDD_IMG="disk.img"
 
@@ -75,7 +75,7 @@ qemu-system-x86_64 $KVM \
 		   $UEFI_VARS \
 		   $CPU \
 		   $MACH \
-		   $DISPLAY \
+		   $GFX \
 		   $HARDDRIVE \
 		   $MEMORY \
 		   $TPM \
